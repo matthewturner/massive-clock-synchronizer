@@ -4,6 +4,10 @@
 
 Synchronizes the time of the massive clock with NTP time servers.
 
+## Installing ESP8266 driver
+
+[Download](https://sparks.gogo.co.nz/ch340.html)
+
 ## Installing Platform IO
 
 Install command line tools by following the installation instructions for [Windows](https://docs.platformio.org/en/latest/core/installation.html#windows)
