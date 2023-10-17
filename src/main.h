@@ -7,9 +7,10 @@
 #include <WiFiUdp.h>
 #include <Eventually.h>
 #include <EventuallyStateMachine.h>
+#include "credentials.h"
 
-const char *ssid = "replace";
-const char *password = "replace";
+const char *ssid = WIFI_SSID;
+const char *password = WIFI_PASSWORD;
 
 int ledPin = 2;
 WiFiServer server(80);

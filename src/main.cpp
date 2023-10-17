@@ -11,7 +11,7 @@ void setup()
   // Connect to WiFi network
   Serial.println();
   Serial.println();
-  Serial.print("Connecting to ");
+  Serial.print(F("Connecting to "));
   Serial.println(ssid);
 
   WiFi.begin(ssid, password);
@@ -19,20 +19,20 @@ void setup()
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
-    Serial.print(".");
+    Serial.print(F("."));
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
+  Serial.println(F(""));
+  Serial.println(F("WiFi connected!"));
 
   // Start the server
   server.begin();
-  Serial.println("Server started");
+  Serial.println(F("Server started"));
 
   // Print the IP address
-  Serial.print("Use this URL to connect: ");
-  Serial.print("http://");
+  Serial.print(F("Use this URL to connect: "));
+  Serial.print(F("http://"));
   Serial.print(WiFi.localIP());
-  Serial.println("/");
+  Serial.println(F("/"));
 
   timeClient.setUpdateInterval(60 * 1000 * 5);
   timeClient.begin();
@@ -48,7 +48,7 @@ void loop()
   }
 
   // Wait until the client sends some data
-  Serial.println("new client");
+  Serial.println(F("New client!"));
   while (!client.available())
   {
     delay(1);
@@ -62,12 +62,12 @@ void loop()
   // Match the request
 
   int value = LOW;
-  if (request.indexOf("/LED=ON") != -1)
+  if (request.indexOf(F("/LED=ON")) != -1)
   {
     digitalWrite(ledPin, HIGH);
     value = HIGH;
   }
-  if (request.indexOf("/LED=OFF") != -1)
+  if (request.indexOf(F("/LED=OFF")) != -1)
   {
     digitalWrite(ledPin, LOW);
     value = LOW;
@@ -77,33 +77,44 @@ void loop()
   // digitalWrite(ledPin, value);
 
   // Return the response
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println(""); //  do not forget this one
-  client.println("<!DOCTYPE HTML>");
-  client.println("<html>");
+  client.println(F("HTTP/1.1 200 OK"));
+  client.println(F("Content-Type: text/html"));
+  client.println(F("")); // do not forget this one
+  client.println(F("<!DOCTYPE HTML>"));
+  client.println(F("<html>"));
+  client.println(F("<body>"));
 
-  // timeClient.update();
+  timeClient.update();
 
-  // client.println(timeClient.getFormattedTime());
-  // client.println(timeClient.getEpochTime());
+  client.print(F("<p>"));
+  client.print(timeClient.getFormattedTime());
+  client.println(F("</p>"));
+  client.print(F("<p>"));
+  client.print(timeClient.getEpochTime());
+  client.println(F("</p>"));
 
-  client.print("Led pin is now: ");
+  client.print(F("<p>"));
+  client.print(F("Led pin is now: "));
 
   if (value == HIGH)
   {
-    client.print("On");
+    client.print(F("On"));
   }
   else
   {
-    client.print("Off");
+    client.print(F("Off"));
   }
-  client.println("<br><br>");
-  client.println("Click <a href=\"/LED=ON\">here</a> turn the LED on pin 2 ON<br>");
-  client.println("Click <a href=\"/LED=OFF\">here turn the LED on pin 2 OFF<br>");
-  client.println("</html>");
+  client.println(F("</p>"));
+  client.print(F("<p>"));
+  client.print(F("Click <a href=\"/LED=ON\">here</a> to turn the LED on pin 2 ON"));
+  client.println(F("</p>"));
+  client.print(F("<p>"));
+  client.print(F("Click <a href=\"/LED=OFF\">here</a> to turn the LED on pin 2 OFF"));
+  client.println(F("</p>"));
+  client.println(F("</body>"));
+  client.println(F("</html>"));
 
   delay(1);
-  Serial.println("Client disconnected");
-  Serial.println("");
+  Serial.println(F("Client disconnected"));
+  Serial.println(F(""));
 }
