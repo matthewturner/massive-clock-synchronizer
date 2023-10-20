@@ -13,6 +13,7 @@
 const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
 const char *scheduleUrl = SCHEDULE_URL;
+const char *scheduleSourceUrl = SCHEDULE_SOURCE_URL;
 
 const byte IDLE = 0;
 const byte UPDATING = 1;

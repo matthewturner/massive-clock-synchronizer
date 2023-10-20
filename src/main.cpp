@@ -149,6 +149,12 @@ void handleConnectedWifiClient()
   client.println(F("</p>"));
 
   client.print(F("<p>"));
+  client.print("<a href=\"");
+  client.print(scheduleSourceUrl);
+  client.print("\">Schedule Source</a>");
+  client.println(F("</p>"));
+
+  client.print(F("<p>"));
   client.print(schedule);
   client.println(F("</p>"));
 
