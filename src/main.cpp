@@ -36,9 +36,61 @@ void setup()
 
   timeClient.setUpdateInterval(60 * 1000 * 5);
   timeClient.begin();
+
+  // stateMachine.when(IDLE, (EvtAction)idle, UPDATING);
+  // stateMachine.transition(UPDATING);
+
+  // mgr.addListener(&stateMachine);
 }
 
-void loop()
+bool idle()
+{
+  Serial.println(F("Sleeping..."));
+  Serial.flush();
+  return true;
+}
+
+bool show()
+{
+  Serial.println(F("Command: SHOW"));
+  stateMachine.transition(SHOWING);
+  return true;
+}
+
+int counter = 0;
+
+bool update()
+{
+  counter++;
+  if (counter < 1000)
+  {
+    return false;
+  }
+  counter = 0;
+
+  Serial.println(F("Command: UPDATE"));
+  // stateMachine.transition(IDLE);
+  RequestOptions options;
+  options.method = "GET";
+  options.headers["Connection"] = "keep-alive";
+  options.headers["accept"] = "text/plain";
+
+  Serial.println("Sending the request...");
+
+  Response response = fetch(scheduleUrl, options);
+  schedule = response.text();
+  int startIndex = 0;
+  int endIndex = schedule.indexOf('\r');
+  Serial.println(schedule.substring(startIndex, endIndex));
+  startIndex = endIndex + 1;
+  endIndex = schedule.length() - 1;
+  Serial.println(schedule.substring(startIndex, endIndex));
+  Serial.println("Finished");
+
+  return true;
+}
+
+void handleConnectedWifiClient()
 {
   // Check if a client has connected
   WiFiClient client = server.accept();
@@ -73,9 +125,6 @@ void loop()
     value = LOW;
   }
 
-  // Set ledPin according to the request
-  // digitalWrite(ledPin, value);
-
   // Return the response
   client.println(F("HTTP/1.1 200 OK"));
   client.println(F("Content-Type: text/html"));
@@ -91,6 +140,16 @@ void loop()
   client.println(F("</p>"));
   client.print(F("<p>"));
   client.print(timeClient.getEpochTime());
+  client.println(F("</p>"));
+
+  client.print(F("<p>"));
+  client.print("<a href=\"");
+  client.print(scheduleUrl);
+  client.print("\">Current Schedule</a>");
+  client.println(F("</p>"));
+
+  client.print(F("<p>"));
+  client.print(schedule);
   client.println(F("</p>"));
 
   client.print(F("<p>"));
@@ -117,4 +176,11 @@ void loop()
   delay(1);
   Serial.println(F("Client disconnected"));
   Serial.println(F(""));
+}
+
+void loop()
+{
+  update();
+  handleConnectedWifiClient();
+  // mgr.loopIteration();
 }

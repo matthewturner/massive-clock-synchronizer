@@ -5,5 +5,6 @@
 
 #define WIFI_SSID "replace"
 #define WIFI_PASSWORD "replace"
+#define SCHEDULE_URL "replace"
 
 #endif
