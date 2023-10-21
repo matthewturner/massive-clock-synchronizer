@@ -21,10 +21,12 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "uk.pool.ntp.org");
 
 EvtManager mgr;
-EvtCommandListener commandListener(&Serial);
+EvtCommandListener commandListener(&Serial, 20);
 
-String schedule;
+long schedule[10];
 
+void initializeSchedule();
+void forceUpdate();
 bool handleWifiClient();
 bool updateSchedule();
 bool updateTime();
