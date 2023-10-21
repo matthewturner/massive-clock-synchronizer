@@ -12,6 +12,9 @@
 
 #define LED 2
 #define MAX_SCHEDULES 10
+#define SCHEDULE_UPDATE_SCHEDULE 1000 * 60 * 60 * 6 // 6 hours
+#define TIME_UPDATE_SCHEDULE 1000                   // 1 second
+#define TIME_UPDATE_INTERVAL 1000 * 60 * 5          // 5 minutes
 
 const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
@@ -33,10 +36,10 @@ void forceUpdate();
 bool handleWifiClient();
 bool updateSchedule();
 bool updateTime();
-bool forceUpdateSchedule(IEvtListener *, IEvtContext *, long data);
+bool pushUpdate(IEvtListener *, IEvtContext *, long data);
 
-EvtTimeListener updateScheduleListener(30000, true, (EvtAction)updateSchedule);
-EvtTimeListener updateTimeListener(1000, true, (EvtAction)updateTime);
+EvtTimeListener updateScheduleListener(SCHEDULE_UPDATE_SCHEDULE, true, (EvtAction)updateSchedule);
+EvtTimeListener updateTimeListener(TIME_UPDATE_SCHEDULE, true, (EvtAction)updateTime);
 EvtTimeListener handleWifiClientListener(0, true, (EvtAction)handleWifiClient);
 
 #endif

@@ -37,20 +37,23 @@ void setup()
   Serial.print(WiFi.localIP());
   Serial.println(F("/"));
 
-  timeClient.setUpdateInterval(60 * 1000 * 5);
+  timeClient.setUpdateInterval(TIME_UPDATE_INTERVAL);
   timeClient.begin();
 
-  commandListener.when("update", (EvtCommandAction)forceUpdateSchedule);
+  commandListener.when("push", (EvtCommandAction)pushUpdate);
 
   mgr.addListener(&commandListener);
   mgr.addListener(&handleWifiClientListener);
   mgr.addListener(&updateTimeListener);
   mgr.addListener(&updateScheduleListener);
+
+  updateSchedule();
+  updateTime();
 }
 
-bool forceUpdateSchedule(IEvtListener *, IEvtContext *, long data)
+bool pushUpdate(IEvtListener *, IEvtContext *, long data)
 {
-  Serial.println("Command: XXX");
+  forceUpdate();
   return true;
 }
 
