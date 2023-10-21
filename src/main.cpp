@@ -5,6 +5,9 @@ void setup()
   Serial.begin(115200);
   delay(10);
 
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, HIGH);
+
   initializeSchedule();
 
   // Connect to WiFi network
@@ -53,6 +56,7 @@ bool forceUpdateSchedule(IEvtListener *, IEvtContext *, long data)
 
 bool updateSchedule()
 {
+  digitalWrite(LED, LOW);
   Serial.println(F("Command: UPDATE"));
   RequestOptions options;
   options.method = F("GET");
@@ -73,6 +77,8 @@ bool updateSchedule()
   schedule[1] = atol(scheduleDef.substring(startIndex, endIndex).c_str());
   Serial.println(schedule[1]);
   timeClient.forceUpdate();
+
+  digitalWrite(LED, HIGH);
 
   return true;
 }
@@ -139,7 +145,7 @@ bool handleWifiClient()
   client.println(F("</p>"));
 
   bool scheduleRetrieved = false;
-  for (byte i = 0; i < 10; i++)
+  for (byte i = 0; i < MAX_SCHEDULES; i++)
   {
     if (schedule[i] > 0)
     {
@@ -172,7 +178,7 @@ void forceUpdate()
   Serial.print(F(">set:"));
   Serial.print(timeClient.getEpochTime());
   Serial.println(F("!"));
-  for (byte i = 0; i < 10; i++)
+  for (byte i = 0; i < MAX_SCHEDULES; i++)
   {
     if (schedule[i] > 0)
     {
@@ -185,7 +191,7 @@ void forceUpdate()
 
 void initializeSchedule()
 {
-  for (byte i = 0; i < 10; i++)
+  for (byte i = 0; i < MAX_SCHEDULES; i++)
   {
     schedule[i] = 0;
   }

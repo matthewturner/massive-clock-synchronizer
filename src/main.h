@@ -10,6 +10,9 @@
 #include "secrets.h"
 #include <Fetch.h>
 
+#define LED 2
+#define MAX_SCHEDULES 10
+
 const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
 const char *scheduleUrl = SCHEDULE_URL;
@@ -23,7 +26,7 @@ NTPClient timeClient(ntpUDP, "uk.pool.ntp.org");
 EvtManager mgr;
 EvtCommandListener commandListener(&Serial, 20);
 
-long schedule[10];
+long schedule[MAX_SCHEDULES];
 
 void initializeSchedule();
 void forceUpdate();
