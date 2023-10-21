@@ -11,75 +11,90 @@ void setup()
   initializeSchedule();
 
   // Connect to WiFi network
-  Serial.println();
-  Serial.println();
-  Serial.print(F("Connecting to "));
-  Serial.println(ssid);
+  DEBUG_PLN();
+  DEBUG_PLN();
+  DEBUG_P(F("Connecting to "));
+  DEBUG_PLN(ssid);
 
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
-    Serial.print(F("."));
+    DEBUG_P(F("."));
   }
 
-  Serial.println();
-  Serial.println(F("WiFi connected!"));
+  DEBUG_PLN();
+  DEBUG_PLN(F("WiFi connected!"));
 
   // Start the server
   server.begin();
-  Serial.println(F("Server started"));
+  DEBUG_PLN(F("Server started"));
 
   // Print the IP address
-  Serial.print(F("Use this URL to connect: "));
-  Serial.print(F("http://"));
-  Serial.print(WiFi.localIP());
-  Serial.println(F("/"));
+  DEBUG_P(F("Use this URL to connect: "));
+  DEBUG_P(F("http://"));
+  DEBUG_P(WiFi.localIP());
+  DEBUG_PLN(F("/"));
 
   timeClient.setUpdateInterval(TIME_UPDATE_INTERVAL);
   timeClient.begin();
 
-  commandListener.when("push", (EvtCommandAction)pushUpdate);
+  commandListener.when("force", (EvtCommandAction)forceUpdate);
 
   mgr.addListener(&commandListener);
   mgr.addListener(&handleWifiClientListener);
   mgr.addListener(&updateTimeListener);
-  mgr.addListener(&updateScheduleListener);
 
   updateSchedule();
   updateTime();
 }
 
-bool pushUpdate(IEvtListener *, IEvtContext *, long data)
+bool forceUpdate(IEvtListener *, IEvtContext *, long data)
 {
-  forceUpdate();
+  updateSchedule();
+  updateTime();
+  pushUpdate();
   return true;
 }
 
 bool updateSchedule()
 {
   digitalWrite(LED, LOW);
-  Serial.println(F("Command: UPDATE"));
+  DEBUG_PLN(F("Updating schedule..."));
+
   RequestOptions options;
   options.method = F("GET");
   options.headers[F("Connection")] = F("keep-alive");
   options.headers[F("accept")] = F("text/plain");
 
-  Serial.println(F("Sending the request..."));
-  Serial.println(F("New schedule:"));
+  DEBUG_PLN(F("Sending the request..."));
+  DEBUG_PLN(F("New schedule:"));
 
   Response response = fetch(scheduleUrl, options);
+
+  if (response.status != 200)
+  {
+    return false;
+  }
+
+  initializeSchedule();
+
   String scheduleDef = response.text();
   int startIndex = 0;
-  int endIndex = scheduleDef.indexOf('\r');
-  schedule[0] = atol(scheduleDef.substring(startIndex, endIndex).c_str());
-  Serial.println(schedule[0]);
-  startIndex = endIndex + 1;
-  endIndex = scheduleDef.length() - 1;
-  schedule[1] = atol(scheduleDef.substring(startIndex, endIndex).c_str());
-  Serial.println(schedule[1]);
-  timeClient.forceUpdate();
+  int endIndex = scheduleDef.indexOf('\r', startIndex);
+
+  for (byte i = 0; i < MAX_SCHEDULES; i++)
+  {
+    if (endIndex == -1)
+    {
+      break;
+    }
+    schedule[i] = atol(scheduleDef.substring(startIndex, endIndex).c_str());
+    DEBUG_PLN(schedule[i]);
+    startIndex = endIndex + 1;
+    endIndex = scheduleDef.indexOf('\r', startIndex);
+  }
 
   digitalWrite(LED, HIGH);
 
@@ -89,8 +104,8 @@ bool updateSchedule()
 bool updateTime()
 {
   timeClient.update();
-  // Serial.print(F("Time: "));
-  // Serial.println(timeClient.getFormattedTime());
+  // DEBUG_P(F("Time: "));
+  // DEBUG_PLN(timeClient.getFormattedTime());
   return true;
 }
 
@@ -104,7 +119,7 @@ bool handleWifiClient()
   }
 
   // Wait until the client sends some data
-  Serial.println(F("New client!"));
+  DEBUG_PLN(F("New client!"));
   while (!client.available())
   {
     delay(1);
@@ -112,13 +127,15 @@ bool handleWifiClient()
 
   // Read the first line of the request
   String request = client.readStringUntil('\r');
-  Serial.println(request);
+  DEBUG_PLN(request);
   client.flush();
 
   // Match the request
   if (request.indexOf(F("/set=force")) != -1)
   {
-    forceUpdate();
+    updateSchedule();
+    updateTime();
+    pushUpdate();
   }
 
   // Return the response
@@ -128,6 +145,8 @@ bool handleWifiClient()
   client.println(F("<!DOCTYPE HTML>"));
   client.println(F("<html>"));
   client.println(F("<body>"));
+
+  client.println(F("<h2>Time</h2>"));
 
   client.print(F("<p>UTC: "));
   client.print(timeClient.getFormattedTime());
@@ -160,27 +179,28 @@ bool handleWifiClient()
   }
   if (!scheduleRetrieved)
   {
-    client.print(F("<p>Pending retrieval... Try again shortly.</p>"));
+    client.println(F("<p>Pending retrieval... Try again shortly.</p>"));
   }
 
   client.print(F("<p>"));
-  client.print(F("To set the clock, click <a href=\"/set=force\">here</a>"));
+  client.print(F("To update the clock now, click <a href=\"/set=force\">here</a>"));
   client.println(F("</p>"));
   client.println(F("</body>"));
   client.println(F("</html>"));
 
   delay(1);
-  Serial.println(F("Client disconnected"));
-  Serial.println();
+  DEBUG_PLN(F("Client disconnected"));
+  DEBUG_PLN();
 
   return true;
 }
 
-void forceUpdate()
+void pushUpdate()
 {
   Serial.print(F(">set:"));
   Serial.print(timeClient.getEpochTime());
   Serial.println(F("!"));
+
   for (byte i = 0; i < MAX_SCHEDULES; i++)
   {
     if (schedule[i] > 0)

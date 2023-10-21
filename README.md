@@ -4,6 +4,12 @@
 
 Synchronizes the time of the massive clock with NTP time servers.
 
+## Commands
+
+Issue the force command to update time, retrieve the latest schedule and push to the clock:
+
+`>force!`
+
 ## Installing ESP8266 driver
 
 [Download](https://sparks.gogo.co.nz/ch340.html)
