@@ -6,7 +6,7 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <Eventually.h>
-#include <EventuallyStateMachine.h>
+#include <EventuallyCommand.h>
 #include "secrets.h"
 #include <Fetch.h>
 
@@ -15,23 +15,23 @@ const char *password = WIFI_PASSWORD;
 const char *scheduleUrl = SCHEDULE_URL;
 const char *scheduleSourceUrl = SCHEDULE_SOURCE_URL;
 
-const byte IDLE = 0;
-const byte UPDATING = 1;
-const byte SHOWING = 2;
-
-int ledPin = 2;
 WiFiServer server(80);
 WiFiUDP ntpUDP;
 
 NTPClient timeClient(ntpUDP, "uk.pool.ntp.org");
 
 EvtManager mgr;
-EvtStateMachineListener stateMachine;
+EvtCommandListener commandListener(&Serial);
+
 String schedule;
 
-void handleConnectedWifiClient();
-bool idle();
-bool update();
-bool show();
+bool handleWifiClient();
+bool updateSchedule();
+bool updateTime();
+bool forceUpdateSchedule(IEvtListener *, IEvtContext *, long data);
+
+EvtTimeListener updateScheduleListener(30000, true, (EvtAction)updateSchedule);
+EvtTimeListener updateTimeListener(1000, true, (EvtAction)updateTime);
+EvtTimeListener handleWifiClientListener(0, true, (EvtAction)handleWifiClient);
 
 #endif

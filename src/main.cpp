@@ -5,8 +5,7 @@ void setup()
   Serial.begin(115200);
   delay(10);
 
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
+  schedule = F("Pending...");
 
   // Connect to WiFi network
   Serial.println();
@@ -21,7 +20,8 @@ void setup()
     delay(500);
     Serial.print(F("."));
   }
-  Serial.println(F(""));
+
+  Serial.println();
   Serial.println(F("WiFi connected!"));
 
   // Start the server
@@ -37,45 +37,30 @@ void setup()
   timeClient.setUpdateInterval(60 * 1000 * 5);
   timeClient.begin();
 
-  // stateMachine.when(IDLE, (EvtAction)idle, UPDATING);
-  // stateMachine.transition(UPDATING);
+  commandListener.when("update-schedule", (EvtCommandAction)forceUpdateSchedule);
 
-  // mgr.addListener(&stateMachine);
+  mgr.addListener(&commandListener);
+  mgr.addListener(&handleWifiClientListener);
+  mgr.addListener(&updateTimeListener);
+  mgr.addListener(&updateScheduleListener);
 }
 
-bool idle()
+bool forceUpdateSchedule(IEvtListener *, IEvtContext *, long data)
 {
-  Serial.println(F("Sleeping..."));
-  Serial.flush();
+  Serial.println("Command: XXX");
   return true;
 }
 
-bool show()
+bool updateSchedule()
 {
-  Serial.println(F("Command: SHOW"));
-  stateMachine.transition(SHOWING);
-  return true;
-}
-
-int counter = 0;
-
-bool update()
-{
-  counter++;
-  if (counter < 1000)
-  {
-    return false;
-  }
-  counter = 0;
-
   Serial.println(F("Command: UPDATE"));
-  // stateMachine.transition(IDLE);
   RequestOptions options;
-  options.method = "GET";
-  options.headers["Connection"] = "keep-alive";
-  options.headers["accept"] = "text/plain";
+  options.method = F("GET");
+  options.headers[F("Connection")] = F("keep-alive");
+  options.headers[F("accept")] = F("text/plain");
 
-  Serial.println("Sending the request...");
+  Serial.println(F("Sending the request..."));
+  Serial.println(F("New schedule:"));
 
   Response response = fetch(scheduleUrl, options);
   schedule = response.text();
@@ -85,18 +70,27 @@ bool update()
   startIndex = endIndex + 1;
   endIndex = schedule.length() - 1;
   Serial.println(schedule.substring(startIndex, endIndex));
-  Serial.println("Finished");
+
+  timeClient.forceUpdate();
 
   return true;
 }
 
-void handleConnectedWifiClient()
+bool updateTime()
+{
+  timeClient.update();
+  Serial.print(F("Time: "));
+  Serial.println(timeClient.getFormattedTime());
+  return true;
+}
+
+bool handleWifiClient()
 {
   // Check if a client has connected
   WiFiClient client = server.accept();
   if (!client)
   {
-    return;
+    return true;
   }
 
   // Wait until the client sends some data
@@ -112,46 +106,38 @@ void handleConnectedWifiClient()
   client.flush();
 
   // Match the request
-
-  int value = LOW;
-  if (request.indexOf(F("/LED=ON")) != -1)
+  if (request.indexOf(F("/set=force")) != -1)
   {
-    digitalWrite(ledPin, HIGH);
-    value = HIGH;
-  }
-  if (request.indexOf(F("/LED=OFF")) != -1)
-  {
-    digitalWrite(ledPin, LOW);
-    value = LOW;
+    Serial.print(F(">set:"));
+    Serial.print(timeClient.getEpochTime());
+    Serial.println(F("!"));
+    Serial.print(F(">set-schedule:"));
+    Serial.print(0);
+    Serial.println(F("!"));
   }
 
   // Return the response
   client.println(F("HTTP/1.1 200 OK"));
   client.println(F("Content-Type: text/html"));
-  client.println(F("")); // do not forget this one
+  client.println(); // do not forget this one
   client.println(F("<!DOCTYPE HTML>"));
   client.println(F("<html>"));
   client.println(F("<body>"));
 
-  timeClient.update();
-
-  client.print(F("<p>"));
+  client.print(F("<p>UTC: "));
   client.print(timeClient.getFormattedTime());
   client.println(F("</p>"));
-  client.print(F("<p>"));
+  client.print(F("<p>Epoch: "));
   client.print(timeClient.getEpochTime());
   client.println(F("</p>"));
 
   client.print(F("<p>"));
-  client.print("<a href=\"");
+  client.print(F("<a href=\""));
   client.print(scheduleUrl);
-  client.print("\">Current Schedule</a>");
-  client.println(F("</p>"));
-
-  client.print(F("<p>"));
-  client.print("<a href=\"");
+  client.print(F("\">Current Schedule</a>"));
+  client.print(F(" <a href=\""));
   client.print(scheduleSourceUrl);
-  client.print("\">Schedule Source</a>");
+  client.print(F("\">Schedule Source</a>"));
   client.println(F("</p>"));
 
   client.print(F("<p>"));
@@ -159,34 +145,19 @@ void handleConnectedWifiClient()
   client.println(F("</p>"));
 
   client.print(F("<p>"));
-  client.print(F("Led pin is now: "));
-
-  if (value == HIGH)
-  {
-    client.print(F("On"));
-  }
-  else
-  {
-    client.print(F("Off"));
-  }
-  client.println(F("</p>"));
-  client.print(F("<p>"));
-  client.print(F("Click <a href=\"/LED=ON\">here</a> to turn the LED on pin 2 ON"));
-  client.println(F("</p>"));
-  client.print(F("<p>"));
-  client.print(F("Click <a href=\"/LED=OFF\">here</a> to turn the LED on pin 2 OFF"));
+  client.print(F("To set the clock, click <a href=\"/set=force\">here</a>"));
   client.println(F("</p>"));
   client.println(F("</body>"));
   client.println(F("</html>"));
 
   delay(1);
   Serial.println(F("Client disconnected"));
-  Serial.println(F(""));
+  Serial.println();
+
+  return true;
 }
 
 void loop()
 {
-  update();
-  handleConnectedWifiClient();
-  // mgr.loopIteration();
+  mgr.loopIteration();
 }
