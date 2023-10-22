@@ -35,7 +35,7 @@ void pushUpdate();
 bool handleWifiClient();
 bool updateSchedule();
 bool updateTime();
-bool forceUpdate(IEvtListener *, IEvtContext *, long data);
+bool sync(IEvtListener *, IEvtContext *, long data);
 
 EvtTimeListener updateTimeListener(TIME_UPDATE_SCHEDULE, true, (EvtAction)updateTime);
 EvtTimeListener handleWifiClientListener(0, true, (EvtAction)handleWifiClient);

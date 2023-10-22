@@ -40,17 +40,16 @@ void setup()
   timeClient.setUpdateInterval(TIME_UPDATE_INTERVAL);
   timeClient.begin();
 
-  commandListener.when("force", (EvtCommandAction)forceUpdate);
+  commandListener.when("request-sync", (EvtCommandAction)sync);
 
   mgr.addListener(&commandListener);
   mgr.addListener(&handleWifiClientListener);
   mgr.addListener(&updateTimeListener);
 
-  updateSchedule();
   updateTime();
 }
 
-bool forceUpdate(IEvtListener *, IEvtContext *, long data)
+bool sync(IEvtListener *, IEvtContext *, long data)
 {
   updateSchedule();
   updateTime();
@@ -131,7 +130,7 @@ bool handleWifiClient()
   client.flush();
 
   // Match the request
-  if (request.indexOf(F("/set=force")) != -1)
+  if (request.indexOf(F("/force-sync")) != -1)
   {
     updateSchedule();
     updateTime();
@@ -183,7 +182,7 @@ bool handleWifiClient()
   }
 
   client.print(F("<p>"));
-  client.print(F("To update the clock now, click <a href=\"/set=force\">here</a>"));
+  client.print(F("To update the clock now, click <a href=\"/force-sync\">here</a>"));
   client.println(F("</p>"));
   client.println(F("</body>"));
   client.println(F("</html>"));
