@@ -30,6 +30,8 @@ EvtCommandListener commandListener(&Serial, 20);
 
 long schedule[MAX_SCHEDULES];
 
+unsigned long lastSync = 0;
+
 void initializeSchedule();
 void pushUpdate();
 bool handleWifiClient();

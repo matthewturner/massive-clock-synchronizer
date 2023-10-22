@@ -54,6 +54,7 @@ bool sync(IEvtListener *, IEvtContext *, long data)
   updateSchedule();
   updateTime();
   pushUpdate();
+  lastSync = millis();
   return true;
 }
 
@@ -179,6 +180,36 @@ bool handleWifiClient()
   if (!scheduleRetrieved)
   {
     client.println(F("<p>Pending retrieval... Try again shortly.</p>"));
+  }
+
+  if (lastSync == 0)
+  {
+    client.println(F("<p>The clock has not been synced since boot</p>"));
+  }
+  else
+  {
+    unsigned long lastSyncAgo = millis() - lastSync;
+    unsigned long lastSyncHoursAgo = lastSyncAgo / 1000 / 60 / 60;
+    unsigned long lastSyncMinutesAgo = lastSyncAgo / 1000 / 60;
+    unsigned long lastSyncSecondsAgo = lastSyncAgo / 1000;
+
+    client.print(F("<p>The clock was last synced "));
+    if (lastSyncHoursAgo > 0)
+    {
+      client.print(lastSyncHoursAgo);
+      client.print(F(" hours"));
+    }
+    else if (lastSyncMinutesAgo > 0)
+    {
+      client.print(lastSyncMinutesAgo);
+      client.print(F(" minutes"));
+    }
+    else
+    {
+      client.print(lastSyncSecondsAgo);
+      client.print(F(" seconds"));
+    }
+    client.println(F(" ago</p>"));
   }
 
   client.print(F("<p>"));
