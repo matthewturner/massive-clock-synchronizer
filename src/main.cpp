@@ -16,6 +16,7 @@ void setup()
   DEBUG_P(F("Connecting to "));
   DEBUG_PLN(ssid);
 
+  WiFi.hostname(F("clock"));
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED)
