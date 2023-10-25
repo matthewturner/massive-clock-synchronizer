@@ -2,7 +2,7 @@
 #define debug_h
 
 // Debugging macros
-#define DEBUG true
+#define DEBUG false
 
 #if DEBUG
 #define DEBUG_P(args...) Serial.print(args)
