@@ -22,11 +22,11 @@ void setup()
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
-    DEBUG_P(F("."));
+    Serial.println(F("."));
   }
 
   DEBUG_PLN();
-  DEBUG_PLN(F("WiFi connected!"));
+  Serial.println(F("WiFi connected!"));
 
   // Start the server
   server.begin();
@@ -45,6 +45,7 @@ void setup()
 
   mgr.addListener(&commandListener);
   mgr.addListener(&handleWifiClientListener);
+  mgr.addListener(&pingListener);
   mgr.addListener(&updateTimeListener);
   mgr.addListener(&updateScheduleListener);
 
@@ -57,6 +58,12 @@ bool sync()
   updateTime();
   pushUpdate();
   lastSync = millis();
+  return true;
+}
+
+bool ping()
+{
+  Serial.println(F(">ping!"));
   return true;
 }
 
