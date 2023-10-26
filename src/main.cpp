@@ -21,7 +21,9 @@ void setup()
 
   while (WiFi.status() != WL_CONNECTED)
   {
+    digitalWrite(LED, HIGH);
     delay(500);
+    digitalWrite(LED, LOW);
     Serial.println(F("."));
   }
 
@@ -51,6 +53,8 @@ void setup()
 
   updateTime();
   updateSchedule();
+
+  digitalWrite(LED, LOW);
 }
 
 bool sync()
@@ -69,7 +73,7 @@ bool ping()
 
 bool updateSchedule()
 {
-  digitalWrite(LED, LOW);
+  digitalWrite(LED, HIGH);
   DEBUG_PLN(F("Updating schedule..."));
 
   RequestOptions options;
@@ -105,7 +109,7 @@ bool updateSchedule()
     endIndex = scheduleDef.indexOf('\r', startIndex);
   }
 
-  digitalWrite(LED, HIGH);
+  digitalWrite(LED, LOW);
 
   return true;
 }
