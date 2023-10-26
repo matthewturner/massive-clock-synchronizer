@@ -46,13 +46,14 @@ void setup()
   mgr.addListener(&commandListener);
   mgr.addListener(&handleWifiClientListener);
   mgr.addListener(&updateTimeListener);
+  mgr.addListener(&updateScheduleListener);
 
   updateTime();
+  updateSchedule();
 }
 
-bool sync(IEvtListener *, IEvtContext *, long data)
+bool sync()
 {
-  updateSchedule();
   updateTime();
   pushUpdate();
   lastSync = millis();
@@ -134,9 +135,11 @@ bool handleWifiClient()
   // Match the request
   if (request.indexOf(F("/force-sync")) != -1)
   {
+    sync();
+  }
+  else if (request.indexOf(F("/update-schedule")) != -1)
+  {
     updateSchedule();
-    updateTime();
-    pushUpdate();
   }
 
   // Return the response
@@ -182,6 +185,9 @@ bool handleWifiClient()
   {
     client.println(F("<p>Pending retrieval... Try again shortly.</p>"));
   }
+  client.print(F("<p>"));
+  client.print(F("To update the schedule now, click <a href=\"/update-schedule\">here</a>"));
+  client.println(F("</p>"));
 
   if (lastSync == 0)
   {
