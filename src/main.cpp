@@ -19,31 +19,44 @@ void setup()
   WiFi.hostname(F("clock"));
   WiFi.begin(ssid, password);
 
+  int counter = 0;
   while (WiFi.status() != WL_CONNECTED)
   {
-    digitalWrite(LED, HIGH);
+    if (counter > 20)
+    {
+      break;
+    }
+    digitalWrite(LED, !digitalRead(LED));
     delay(500);
-    digitalWrite(LED, LOW);
     Serial.println(F("."));
+    counter++;
   }
 
-  DEBUG_PLN();
-  Serial.println(F("WiFi connected!"));
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    DEBUG_PLN();
+    Serial.println(F("WiFi connected!"));
 
-  // Start the server
-  server.begin();
-  DEBUG_PLN(F("Server started"));
+    // Start the server
+    server.begin();
+    DEBUG_PLN(F("Server started"));
 
-  // Print the IP address
-  DEBUG_P(F("Use this URL to connect: "));
-  DEBUG_P(F("http://"));
-  DEBUG_P(WiFi.localIP());
-  DEBUG_PLN(F("/"));
+    // Print the IP address
+    DEBUG_P(F("Use this URL to connect: "));
+    DEBUG_P(F("http://"));
+    DEBUG_P(WiFi.localIP());
+    DEBUG_PLN(F("/"));
+  }
+  else
+  {
+    Serial.println(F("WiFi failed to connect"));
+  }
 
   timeClient.setUpdateInterval(TIME_UPDATE_INTERVAL);
   timeClient.begin();
 
   commandListener.when("request-sync", (EvtCommandAction)sync);
+  commandListener.when("ping", (EvtCommandAction)pong);
 
   mgr.addListener(&commandListener);
   mgr.addListener(&handleWifiClientListener);
@@ -68,6 +81,12 @@ bool sync()
 bool ping()
 {
   Serial.println(F(">ping!"));
+  return true;
+}
+
+bool pong()
+{
+  Serial.println(F(">pong!"));
   return true;
 }
 

@@ -33,6 +33,8 @@ EvtCommandListener commandListener(&Serial, 20);
 long schedule[MAX_SCHEDULES];
 
 unsigned long lastSync = 0;
+unsigned long lastScheduleUpdate = 0;
+bool connected = false;
 
 void initializeSchedule();
 void pushUpdate();
@@ -41,6 +43,7 @@ bool updateSchedule();
 bool updateTime();
 bool sync();
 bool ping();
+bool pong();
 
 EvtTimeListener pingListener(PING_SCHEDULE, true, (EvtAction)ping);
 EvtTimeListener updateTimeListener(TIME_UPDATE_SCHEDULE, true, (EvtAction)updateTime);
