@@ -78,6 +78,12 @@ bool sync()
   return true;
 }
 
+bool show()
+{
+  Serial.println(F(">show!"));
+  return true;
+}
+
 bool ping()
 {
   Serial.println(F(">ping!"));
@@ -129,6 +135,7 @@ bool updateSchedule()
   }
 
   digitalWrite(LED, LOW);
+  lastScheduleUpdate = millis();
 
   return true;
 }
@@ -152,9 +159,22 @@ bool handleWifiClient()
 
   // Wait until the client sends some data
   DEBUG_PLN(F("New client!"));
+  ushort counter = 0;
   while (!client.available())
   {
     delay(1);
+    counter++;
+    if (counter > 500)
+    {
+      break;
+    }
+  }
+
+  if (!client.available())
+  {
+    DEBUG_P(F("Client did not complete request"));
+    client.stop();
+    return true;
   }
 
   // Read the first line of the request
@@ -171,6 +191,10 @@ bool handleWifiClient()
   {
     updateSchedule();
   }
+  else if (request.indexOf(F("/show")) != -1)
+  {
+    show();
+  }
 
   // Return the response
   client.println(F("HTTP/1.1 200 OK"));
@@ -179,6 +203,12 @@ bool handleWifiClient()
   client.println(F("<!DOCTYPE HTML>"));
   client.println(F("<html>"));
   client.println(F("<body>"));
+
+  client.print(F("<p>"));
+  client.print(F("<a href=\"/show\"><button>Show</button></a> "));
+  client.print(F("<a href=\"/force-sync\"><button>Sync</button></a> "));
+  client.print(F("<a href=\"/update-schedule\"><button>Update Schedule</button></a>"));
+  client.println(F("</p>"));
 
   client.println(F("<h2>Time</h2>"));
 
@@ -211,13 +241,16 @@ bool handleWifiClient()
       client.println(F("</p>"));
     }
   }
-  if (!scheduleRetrieved)
+  if (scheduleRetrieved)
+  {
+    client.print(F("<p>The schedule was last retrieved "));
+    printTimeAgo(&client, lastScheduleUpdate);
+    client.print(F("<p>"));
+  }
+  else
   {
     client.println(F("<p>Pending retrieval... Try again shortly.</p>"));
   }
-  client.print(F("<p>"));
-  client.print(F("To update the schedule now, click <a href=\"/update-schedule\">here</a>"));
-  client.println(F("</p>"));
 
   if (lastSync == 0)
   {
@@ -225,41 +258,50 @@ bool handleWifiClient()
   }
   else
   {
-    unsigned long lastSyncAgo = millis() - lastSync;
-    unsigned long lastSyncHoursAgo = lastSyncAgo / 1000 / 60 / 60;
-    unsigned long lastSyncMinutesAgo = lastSyncAgo / 1000 / 60;
-    unsigned long lastSyncSecondsAgo = lastSyncAgo / 1000;
-
     client.print(F("<p>The clock was last synced "));
-    if (lastSyncHoursAgo > 0)
-    {
-      client.print(lastSyncHoursAgo);
-      client.print(F(" hours"));
-    }
-    else if (lastSyncMinutesAgo > 0)
-    {
-      client.print(lastSyncMinutesAgo);
-      client.print(F(" minutes"));
-    }
-    else
-    {
-      client.print(lastSyncSecondsAgo);
-      client.print(F(" seconds"));
-    }
-    client.println(F(" ago</p>"));
+    printTimeAgo(&client, lastSync);
+    client.print(F("</p>"));
   }
 
-  client.print(F("<p>"));
-  client.print(F("To update the clock now, click <a href=\"/force-sync\">here</a>"));
-  client.println(F("</p>"));
   client.println(F("</body>"));
   client.println(F("</html>"));
 
   delay(1);
+
+  client.stop();
+
   DEBUG_PLN(F("Client disconnected"));
   DEBUG_PLN();
 
   return true;
+}
+
+void printTimeAgo(WiFiClient *pClient, unsigned long previousTime)
+{
+  WiFiClient client = *pClient;
+
+  unsigned long ago = millis() - previousTime;
+
+  unsigned long hoursAgo = ago / 1000 / 60 / 60;
+  unsigned long minutesAgo = ago / 1000 / 60;
+  unsigned long secondsAgo = ago / 1000;
+
+  if (hoursAgo > 0)
+  {
+    client.print(hoursAgo);
+    client.print(F(" hours"));
+  }
+  else if (minutesAgo > 0)
+  {
+    client.print(minutesAgo);
+    client.print(F(" minutes"));
+  }
+  else
+  {
+    client.print(secondsAgo);
+    client.print(F(" seconds"));
+  }
+  client.println(F(" ago"));
 }
 
 void pushUpdate()

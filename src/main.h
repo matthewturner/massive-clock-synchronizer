@@ -12,7 +12,7 @@
 
 #define LED 2
 #define MAX_SCHEDULES 10
-#define PING_SCHEDULE 5000
+#define PING_SCHEDULE 20000
 #define SCHEDULE_UPDATE_SCHEDULE 1000 * 60 * 60 // 1 hour
 #define TIME_UPDATE_SCHEDULE 1000               // 1 second
 #define TIME_UPDATE_INTERVAL 1000 * 60 * 5      // 5 minutes
@@ -38,12 +38,14 @@ bool connected = false;
 
 void initializeSchedule();
 void pushUpdate();
+void printTimeAgo(WiFiClient *client, unsigned long previousTime);
 bool handleWifiClient();
 bool updateSchedule();
 bool updateTime();
 bool sync();
 bool ping();
 bool pong();
+bool show();
 
 EvtTimeListener pingListener(PING_SCHEDULE, true, (EvtAction)ping);
 EvtTimeListener updateTimeListener(TIME_UPDATE_SCHEDULE, true, (EvtAction)updateTime);
