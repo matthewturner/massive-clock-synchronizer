@@ -38,7 +38,7 @@ bool connected = false;
 
 void initializeSchedule();
 void pushUpdate();
-void printTimeAgo(WiFiClient *client, unsigned long previousTime);
+void printTimeAgo(WiFiClient *client, unsigned long previousTime, bool includeAgo = true);
 bool handleWifiClient();
 bool updateSchedule();
 bool updateTime();

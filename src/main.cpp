@@ -205,6 +205,7 @@ bool handleWifiClient()
   client.println(F("<body>"));
 
   client.print(F("<p>"));
+  client.print(F("<a href=\"/\"><button>Home</button></a> "));
   client.print(F("<a href=\"/show\"><button>Show</button></a> "));
   client.print(F("<a href=\"/force-sync\"><button>Sync</button></a> "));
   client.print(F("<a href=\"/update-schedule\"><button>Update Schedule</button></a>"));
@@ -263,6 +264,10 @@ bool handleWifiClient()
     client.print(F("</p>"));
   }
 
+  client.print(F("<p>Last boot: "));
+  printTimeAgo(&client, 0);
+  client.print(F("</p>"));
+
   client.println(F("</body>"));
   client.println(F("</html>"));
 
@@ -276,7 +281,7 @@ bool handleWifiClient()
   return true;
 }
 
-void printTimeAgo(WiFiClient *pClient, unsigned long previousTime)
+void printTimeAgo(WiFiClient *pClient, unsigned long previousTime, bool includeAgo)
 {
   WiFiClient client = *pClient;
 
@@ -301,7 +306,11 @@ void printTimeAgo(WiFiClient *pClient, unsigned long previousTime)
     client.print(secondsAgo);
     client.print(F(" seconds"));
   }
-  client.println(F(" ago"));
+
+  if (includeAgo)
+  {
+    client.println(F(" ago"));
+  }
 }
 
 void pushUpdate()
