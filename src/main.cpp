@@ -318,6 +318,7 @@ void pushUpdate()
   Serial.print(F(">set:"));
   Serial.print(timeClient.getEpochTime());
   Serial.println(F("!"));
+  delay(300);
 
   for (byte i = 0; i < MAX_SCHEDULES; i++)
   {
@@ -326,6 +327,7 @@ void pushUpdate()
       Serial.print(F(">set-schedule:"));
       Serial.print(schedule[i]);
       Serial.println(F("!"));
+      delay(300);
     }
   }
 }
