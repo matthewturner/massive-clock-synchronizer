@@ -1,5 +1,5 @@
-#ifndef CREDENTIALS_H
-#define CREDENTIALS_H
+#ifndef SECRETS_H
+#define SECRETS_H
 
 // copy this file to credentials.h and replace the following:
 
