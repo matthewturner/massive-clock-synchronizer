@@ -28,14 +28,14 @@ void setup()
     }
     digitalWrite(LED, !digitalRead(LED));
     delay(500);
-    Serial.println(F("."));
+    DEBUG_PLN(F("."));
     counter++;
   }
 
   if (WiFi.status() == WL_CONNECTED)
   {
     DEBUG_PLN();
-    Serial.println(F("WiFi connected!"));
+    DEBUG_PLN(F("WiFi connected!"));
 
     // Start the server
     server.begin();
@@ -49,7 +49,7 @@ void setup()
   }
   else
   {
-    Serial.println(F("WiFi failed to connect"));
+    DEBUG_PLN(F("WiFi failed to connect"));
   }
 
   timeClient.setUpdateInterval(TIME_UPDATE_INTERVAL);
