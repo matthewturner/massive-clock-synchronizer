@@ -183,18 +183,139 @@ bool handleWifiClient()
   client.flush();
 
   // Match the request
-  if (request.indexOf(F("/force-sync")) != -1)
+  if (request.indexOf(F("/v1/status")) != -1)
+  {
+    outputStatusAsJson(&client);
+  }
+  else if (request.indexOf(F("/force-sync")) != -1)
   {
     sync();
+    outputStatusAsHtml(&client);
   }
   else if (request.indexOf(F("/update-schedule")) != -1)
   {
     updateSchedule();
+    outputStatusAsHtml(&client);
   }
   else if (request.indexOf(F("/show")) != -1)
   {
     show();
+    outputStatusAsHtml(&client);
   }
+  else
+  {
+    outputStatusAsHtml(&client);
+  }
+
+  delay(1);
+
+  client.stop();
+
+  DEBUG_PLN(F("Client disconnected"));
+  DEBUG_PLN();
+
+  return true;
+}
+
+void formatEpochAsUtc(char buff[32], unsigned long epochTime)
+{
+  sprintf(buff, "%02d-%02d-%02dT%02d:%02d:%02dZ", year(epochTime), month(epochTime), day(epochTime), hour(epochTime), minute(epochTime), second(epochTime));
+}
+
+void outputStatusAsJson(WiFiClient *pClient)
+{
+  WiFiClient client = *pClient;
+
+  client.println(F("HTTP/1.1 200 OK"));
+  client.println(F("Content-Type: application/json"));
+
+  unsigned long now = millis();
+
+  unsigned long epochTime = timeClient.getEpochTime();
+  char buff[32];
+  formatEpochAsUtc(buff, epochTime);
+
+  String body = F("{\n");
+  body += F("\"utc\": \"");
+  body += buff;
+  body += "\",\n";
+  body += F("\"epoch\": ");
+  body += String(epochTime);
+  body += ",\n";
+
+  bool scheduleRetrieved = false;
+  body += F("\"schedules\": [");
+  for (byte i = 0; i < MAX_SCHEDULES; i++)
+  {
+    if (schedule[i] > 0)
+    {
+      scheduleRetrieved = true;
+      body += F("\n");
+      body += String(schedule[i]);
+      body += F(",");
+    }
+  }
+  if (body.endsWith(","))
+  {
+    int lastIndex = body.length() - 1;
+    body.remove(lastIndex);
+    body += F("\n");
+  }
+  body += F("],\n");
+
+  body += F("\"scheduleUpdatedAt\": ");
+  if (scheduleRetrieved)
+  {
+    unsigned long scheduleUpdatedAt = epochTime - (lastScheduleUpdate / 1000);
+    formatEpochAsUtc(buff, scheduleUpdatedAt);
+    body += F("\"");
+    body += String(buff);
+    body += F("\"");
+  }
+  else
+  {
+    body += F("null");
+  }
+  body += F(",\n");
+
+  body += F("\"timeSyncedAt\": ");
+  if (lastSync == 0)
+  {
+    body += F("null");
+  }
+  else
+  {
+    unsigned long lastSyncedAt = epochTime - (lastSync / 1000);
+    formatEpochAsUtc(buff, lastSyncedAt);
+    body += F("\"");
+    body += String(buff);
+    body += F("\"");
+  }
+  body += F(",\n");
+
+  unsigned long upTimeMs = now;
+  body += F("\"upTimeMs\": ");
+  body += String(upTimeMs);
+  body += F(",\n");
+
+  body += F("\"systemBootedAt\": \"");
+  unsigned long lastBoot = epochTime - (upTimeMs / 1000);
+  formatEpochAsUtc(buff, lastBoot);
+  body += String(buff);
+  body += F("\"");
+
+  body += F("\n}\n");
+
+  client.print(F("Content-Length: "));
+  client.println(body.length());
+  client.println(); // do not forget this one
+
+  client.print(body);
+}
+
+void outputStatusAsHtml(WiFiClient *pClient)
+{
+  WiFiClient client = *pClient;
 
   // Return the response
   client.println(F("HTTP/1.1 200 OK"));
@@ -270,15 +391,6 @@ bool handleWifiClient()
 
   client.println(F("</body>"));
   client.println(F("</html>"));
-
-  delay(1);
-
-  client.stop();
-
-  DEBUG_PLN(F("Client disconnected"));
-  DEBUG_PLN();
-
-  return true;
 }
 
 void printTimeAgo(WiFiClient *pClient, unsigned long previousTime, bool includeAgo)
