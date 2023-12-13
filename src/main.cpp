@@ -217,6 +217,11 @@ bool handleWifiClient()
   return true;
 }
 
+void formatEpochAsUtc(char buff[32], unsigned long epochTime)
+{
+  sprintf(buff, "%02d-%02d-%02dT%02d:%02d:%02dZ", year(epochTime), month(epochTime), day(epochTime), hour(epochTime), minute(epochTime), second(epochTime));
+}
+
 void outputStatusAsJson(WiFiClient *pClient)
 {
   WiFiClient client = *pClient;
@@ -226,12 +231,16 @@ void outputStatusAsJson(WiFiClient *pClient)
 
   unsigned long now = millis();
 
+  unsigned long epochTime = timeClient.getEpochTime();
+  char buff[32];
+  formatEpochAsUtc(buff, epochTime);
+
   String body = F("{\n");
-  client.print(F("\"utc\": \""));
-  body += timeClient.getFormattedTime();
+  body += F("\"utc\": \"");
+  body += buff;
   body += "\",\n";
-  body += F("\"epoch\": \"");
-  body += String(timeClient.getEpochTime());
+  body += F("\"epoch\": ");
+  body += String(epochTime);
   body += ",\n";
 
   bool scheduleRetrieved = false;
@@ -250,13 +259,18 @@ void outputStatusAsJson(WiFiClient *pClient)
   {
     int lastIndex = body.length() - 1;
     body.remove(lastIndex);
+    body += F("\n");
   }
   body += F("],\n");
 
-  body += F("\"lastScheduleUpdate\": ");
+  body += F("\"scheduleUpdatedAt\": ");
   if (scheduleRetrieved)
   {
-    body += String(lastScheduleUpdate);
+    unsigned long scheduleUpdatedAt = epochTime - (lastScheduleUpdate / 1000);
+    formatEpochAsUtc(buff, scheduleUpdatedAt);
+    body += F("\"");
+    body += String(buff);
+    body += F("\"");
   }
   else
   {
@@ -264,20 +278,31 @@ void outputStatusAsJson(WiFiClient *pClient)
   }
   body += F(",\n");
 
-  body += F("\"lastSync\": ");
+  body += F("\"timeSyncedAt\": ");
   if (lastSync == 0)
   {
     body += F("null");
   }
   else
   {
-    body += String(lastSync);
+    unsigned long lastSyncedAt = epochTime - (lastSync / 1000);
+    formatEpochAsUtc(buff, lastSyncedAt);
+    body += F("\"");
+    body += String(buff);
+    body += F("\"");
   }
   body += F(",\n");
 
-  unsigned long lastBoot = now - 0;
-  body += F("\"lastBoot\": ");
-  body += String(lastBoot);
+  unsigned long upTimeMs = now;
+  body += F("\"upTimeMs\": ");
+  body += String(upTimeMs);
+  body += F(",\n");
+
+  body += F("\"systemBootedAt\": \"");
+  unsigned long lastBoot = epochTime - (upTimeMs / 1000);
+  formatEpochAsUtc(buff, lastBoot);
+  body += String(buff);
+  body += F("\"");
 
   body += F("\n}\n");
 

@@ -9,6 +9,7 @@
 #include <EventuallyCommand.h>
 #include "secrets.h"
 #include <Fetch.h>
+#include <TimeLib.h>
 
 #define LED 2
 #define MAX_SCHEDULES 10
@@ -48,6 +49,7 @@ bool pong();
 bool show();
 void outputStatusAsJson(WiFiClient *pClient);
 void outputStatusAsHtml(WiFiClient *pClient);
+void formatEpochAsUtc(char buff[32], unsigned long epochTime);
 
 EvtTimeListener pingListener(PING_SCHEDULE, true, (EvtAction)ping);
 EvtTimeListener updateTimeListener(TIME_UPDATE_SCHEDULE, true, (EvtAction)updateTime);
