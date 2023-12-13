@@ -183,7 +183,7 @@ bool handleWifiClient()
   client.flush();
 
   // Match the request
-  if (request.indexOf(F("/status")) != -1)
+  if (request.indexOf(F("/v1/status")) != -1)
   {
     outputStatusAsJson(&client);
   }
@@ -234,15 +234,6 @@ void outputStatusAsJson(WiFiClient *pClient)
   body += String(timeClient.getEpochTime());
   body += ",\n";
 
-  // client.print(F("<p>"));
-  // client.print(F("<a href=\""));
-  // client.print(scheduleUrl);
-  // client.print(F("\">Current</a>"));
-  // client.print(F(" <a href=\""));
-  // client.print(scheduleSourceUrl);
-  // client.print(F("\">Source</a>"));
-  // client.println(F("</p>"));
-
   bool scheduleRetrieved = false;
   body += F("\"schedules\": [");
   for (byte i = 0; i < MAX_SCHEDULES; i++)
@@ -255,21 +246,34 @@ void outputStatusAsJson(WiFiClient *pClient)
       body += F(",");
     }
   }
+  if (body.endsWith(","))
+  {
+    int lastIndex = body.length() - 1;
+    body.remove(lastIndex);
+  }
   body += F("],\n");
 
+  body += F("\"lastScheduleUpdate\": ");
   if (scheduleRetrieved)
   {
-    body += F("\"lastScheduleUpdate\": ");
     body += String(lastScheduleUpdate);
-    body += F(",\n");
   }
-
-  if (lastSync != 0)
+  else
   {
-    body += F("\"lastSync\": ");
-    body += String(lastSync);
-    body += F(",\n");
+    body += F("null");
   }
+  body += F(",\n");
+
+  body += F("\"lastSync\": ");
+  if (lastSync == 0)
+  {
+    body += F("null");
+  }
+  else
+  {
+    body += String(lastSync);
+  }
+  body += F(",\n");
 
   unsigned long lastBoot = now - 0;
   body += F("\"lastBoot\": ");
