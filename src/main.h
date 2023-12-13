@@ -46,6 +46,8 @@ bool sync();
 bool ping();
 bool pong();
 bool show();
+void outputStatusAsJson(WiFiClient *pClient);
+void outputStatusAsHtml(WiFiClient *pClient);
 
 EvtTimeListener pingListener(PING_SCHEDULE, true, (EvtAction)ping);
 EvtTimeListener updateTimeListener(TIME_UPDATE_SCHEDULE, true, (EvtAction)updateTime);

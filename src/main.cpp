@@ -183,18 +183,110 @@ bool handleWifiClient()
   client.flush();
 
   // Match the request
-  if (request.indexOf(F("/force-sync")) != -1)
+  if (request.indexOf(F("/status")) != -1)
+  {
+    outputStatusAsJson(&client);
+  }
+  else if (request.indexOf(F("/force-sync")) != -1)
   {
     sync();
+    outputStatusAsHtml(&client);
   }
   else if (request.indexOf(F("/update-schedule")) != -1)
   {
     updateSchedule();
+    outputStatusAsHtml(&client);
   }
   else if (request.indexOf(F("/show")) != -1)
   {
     show();
+    outputStatusAsHtml(&client);
   }
+  else
+  {
+    outputStatusAsHtml(&client);
+  }
+
+  delay(1);
+
+  client.stop();
+
+  DEBUG_PLN(F("Client disconnected"));
+  DEBUG_PLN();
+
+  return true;
+}
+
+void outputStatusAsJson(WiFiClient *pClient)
+{
+  WiFiClient client = *pClient;
+
+  client.println(F("HTTP/1.1 200 OK"));
+  client.println(F("Content-Type: application/json"));
+
+  unsigned long now = millis();
+
+  String body = F("{\n");
+  client.print(F("\"utc\": \""));
+  body += timeClient.getFormattedTime();
+  body += "\",\n";
+  body += F("\"epoch\": \"");
+  body += String(timeClient.getEpochTime());
+  body += ",\n";
+
+  // client.print(F("<p>"));
+  // client.print(F("<a href=\""));
+  // client.print(scheduleUrl);
+  // client.print(F("\">Current</a>"));
+  // client.print(F(" <a href=\""));
+  // client.print(scheduleSourceUrl);
+  // client.print(F("\">Source</a>"));
+  // client.println(F("</p>"));
+
+  bool scheduleRetrieved = false;
+  body += F("\"schedules\": [");
+  for (byte i = 0; i < MAX_SCHEDULES; i++)
+  {
+    if (schedule[i] > 0)
+    {
+      scheduleRetrieved = true;
+      body += F("\n");
+      body += String(schedule[i]);
+      body += F(",");
+    }
+  }
+  body += F("],\n");
+
+  if (scheduleRetrieved)
+  {
+    body += F("\"lastScheduleUpdate\": ");
+    body += String(lastScheduleUpdate);
+    body += F(",\n");
+  }
+
+  if (lastSync != 0)
+  {
+    body += F("\"lastSync\": ");
+    body += String(lastSync);
+    body += F(",\n");
+  }
+
+  unsigned long lastBoot = now - 0;
+  body += F("\"lastBoot\": ");
+  body += String(lastBoot);
+
+  body += F("\n}\n");
+
+  client.print(F("Content-Length: "));
+  client.println(body.length());
+  client.println(); // do not forget this one
+
+  client.print(body);
+}
+
+void outputStatusAsHtml(WiFiClient *pClient)
+{
+  WiFiClient client = *pClient;
 
   // Return the response
   client.println(F("HTTP/1.1 200 OK"));
@@ -270,15 +362,6 @@ bool handleWifiClient()
 
   client.println(F("</body>"));
   client.println(F("</html>"));
-
-  delay(1);
-
-  client.stop();
-
-  DEBUG_PLN(F("Client disconnected"));
-  DEBUG_PLN();
-
-  return true;
 }
 
 void printTimeAgo(WiFiClient *pClient, unsigned long previousTime, bool includeAgo)
