@@ -266,7 +266,8 @@ void outputStatusAsJson(WiFiClient *pClient)
   body += F("\"scheduleUpdatedAt\": ");
   if (scheduleRetrieved)
   {
-    unsigned long scheduleUpdatedAt = epochTime - (lastScheduleUpdate / 1000);
+    unsigned long lastScheduleUpdateAgoSeconds = (now - lastScheduleUpdate) / 1000;
+    unsigned long scheduleUpdatedAt = epochTime - lastScheduleUpdateAgoSeconds;
     formatEpochAsUtc(buff, scheduleUpdatedAt);
     body += F("\"");
     body += String(buff);
@@ -278,14 +279,15 @@ void outputStatusAsJson(WiFiClient *pClient)
   }
   body += F(",\n");
 
-  body += F("\"timeSyncedAt\": ");
+  body += F("\"clockSyncedAt\": ");
   if (lastSync == 0)
   {
     body += F("null");
   }
   else
   {
-    unsigned long lastSyncedAt = epochTime - (lastSync / 1000);
+    unsigned long lastSyncAgoSeconds = (now - lastSync) / 1000;
+    unsigned long lastSyncedAt = epochTime - lastSyncAgoSeconds;
     formatEpochAsUtc(buff, lastSyncedAt);
     body += F("\"");
     body += String(buff);
