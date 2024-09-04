@@ -1,0 +1,3 @@
+GET http://{{host}}/v1/status
+
+?? status == 200
